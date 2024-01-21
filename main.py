@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3.7
 
 import sys, random
 import numpy as np
@@ -277,13 +277,12 @@ def row_table(stat):
 	df.rename(columns={'Billing': 'Inkindo'}, inplace=True)
 	columns = []
 	for i in df.columns:
-		match i:
-			case 'Year' | 'Color':
-				columns.append({'name': i, 'id': i})
-			case 'Inkindo':
-				columns.append({'name': i, 'id': i, 'type': 'numeric', 'format': Format(precision=2, scheme=Scheme.fixed, group=Group.yes)})
-			case _:
-				columns.append({'name': i, 'id': i, 'type': 'numeric', 'format': Format(precision=4, scheme=Scheme.fixed, group=Group.yes)})
+		if i in ['Year', 'Color']:
+			columns.append({'name': i, 'id': i})
+		elif i == 'Inkindo':
+			columns.append({'name': i, 'id': i, 'type': 'numeric', 'format': Format(precision=2, scheme=Scheme.fixed, group=Group.yes)})
+		else:
+			columns.append({'name': i, 'id': i, 'type': 'numeric', 'format': Format(precision=4, scheme=Scheme.fixed, group=Group.yes)})
 	return dash_table.DataTable(df.to_dict('records'), columns, cell_selectable=False, style_table={'overflowX': 'scroll'})
 
 def row_summary(row, plot):
