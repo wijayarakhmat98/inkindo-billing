@@ -1,7 +1,6 @@
 python=3.7
 numpy
-matplotlib
 pandas
 scipy
-openpyxl
+plotly
 dash
