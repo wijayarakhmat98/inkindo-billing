@@ -84,13 +84,13 @@ def app_layout():
 				{'label': 'Draw mean confidence interval', 'value': 'mean'},
 				{'label': 'Draw prediction interval', 'value': 'pred'},
 			],
-			['trace', 'mean', 'pred'],
+			['mean', 'pred'],
 			id='scatter_toggle',
 			labelStyle={'display': 'block'}
 		),
 		html.Br(), html.Hr(),
 		html.Div(id='output')
-	], style={'width': '85vmin'})], style={'display': 'flex', 'justify-content': 'center'})
+	], style={'width': '100vmin'})], style={'display': 'flex', 'justify-content': 'center'})
 
 @app.callback(
 	Output('input_table', 'data'),
@@ -245,10 +245,7 @@ def row_plot(stat, toggle):
 			p['marker']['color'] = 'black'
 	for f in plot.values():
 		for p in f.data:
-			if p['mode'] == 'lines':
-				p['hovertemplate'] = 'Year: %{x}<br>Billing: %{y:,.4f}<extra></extra>'
-			if p['mode'] == 'markers':
-				p['hovertemplate'] = 'Year: %{x}<br>Billing: %{y:,.4f}<extra></extra>'
+			p['hovertemplate'] = 'Year: %{x}<br>Billing: %{y:,.4f}<extra></extra>'
 	return plot
 
 def row_figure(plot):
@@ -262,19 +259,17 @@ def row_figure(plot):
 	))
 
 def row_table(stat):
-	df = pd.DataFrame(np.c_[stat['year'], stat['yhat'], stat['mean'][:, [1, 0]], stat['pred'][:, [1, 0]]])
-	df = pd.merge(stat['data'][['Year', 'Billing']], df, left_on='Year', right_on=0, how='right')
-	df = df[['Year', 'Billing', 1, 2, 3, 4, 5]]
+	df = pd.DataFrame(np.c_[stat['year'], stat['yhat'], stat['mean'], stat['pred']])
+	df = pd.merge(df, stat['data'][['Year', 'Billing']], left_on=0, right_on='Year', how='left')[
+		['Year', 'Billing'] + list(range(1, df.shape[1]))
+	]
 	df.columns = [
-		'Year',
-		'Inkindo',
-		'Model',
+		'Year', 'Inkindo', 'Model',
 		'{}% Mean Low'.format(stat['mean-level'] * 100),
 		'{}% Mean High'.format(stat['mean-level'] * 100),
 		'{}% Predicted Low'.format(stat['pred-level'] * 100),
 		'{}% Predicted High'.format(stat['pred-level'] * 100)
 	]
-	df.rename(columns={'Billing': 'Inkindo'}, inplace=True)
 	columns = []
 	for i in df.columns:
 		if i in ['Year', 'Color']:
@@ -318,9 +313,6 @@ def summary_figure(data):
 			)
 		))
 	]
-
-def random_hash():
-	return '{:x}'.format(random.getrandbits(128))
 
 def model_X(df):
 	global degree
@@ -393,7 +385,7 @@ class linear_regression:
 
 	def mean_interval(self, X, a):
 		return (
-			X @ self.b
+			self.mean(X)
 			+ stats.t.ppf((1.0 - a) / 2.0, self.v)
 			* self.s
 			* np.sqrt(np.reshape(
@@ -402,12 +394,12 @@ class linear_regression:
 				@ np.reshape(X, [X.shape[0], X.shape[1], 1])
 				, [X.shape[0], 1]
 			))
-			* np.array([[-1, 1]])
+			* np.array([[1, -1]])
 		)
 
 	def predict_interval(self, X, a):
 		return (
-			X @ self.b
+			self.mean(X)
 			+ stats.t.ppf((1.0 - a) / 2.0, self.v)
 			* self.s
 			* np.sqrt(np.reshape(
@@ -417,7 +409,7 @@ class linear_regression:
 				@ np.reshape(X, [X.shape[0], X.shape[1], 1])
 				, [X.shape[0], 1]
 			))
-			* np.array([[-1, 1]])
+			* np.array([[1, -1]])
 		)
 
 if __name__ == '__main__':
