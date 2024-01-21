@@ -261,7 +261,7 @@ def row_figure(plot):
 def row_table(stat):
 	df = pd.DataFrame(np.c_[stat['year'], stat['yhat'], stat['mean'], stat['pred']])
 	df = pd.merge(df, stat['data'][['Year', 'Billing']], left_on=0, right_on='Year', how='left')[
-		['Year', 'Billing'] + list(range(1, df.shape[1]))
+		[0, 'Billing'] + list(range(1, df.shape[1]))
 	]
 	df.columns = [
 		'Year', 'Inkindo', 'Model',
